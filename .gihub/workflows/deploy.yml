@@ -7,8 +7,15 @@ on:
 jobs:
   inject-and-deploy:
     runs-on: ubuntu-latest
+    
     permissions:
-      contents: write                    # needed to push back to main
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v3
@@ -19,17 +26,15 @@ jobs:
           sed -i "s|__USERS_ID__|${{ secrets.APPSCRIPT_REGISTEREDUSERS_DEPLOYMENTID }}|g" api.js
           sed -i "s|__COLLECTIONS_ID__|${{ secrets.APPSCRIPT_USERSDATA_DEPLOYMENTID }}|g" api.js
 
-      - name: Verify injection            # check this in Actions log
+      - name: Verify injection            # ← check this in Actions log
         run: grep "exec" api.js
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          exclude_assets: '.github,.gitignore,.env'  # don't expose these
-```
+      - uses: actions/configure-pages@v3
 
-Then set GitHub Pages to serve from **`gh-pages` branch**:
-```
-Settings → Pages → Branch → gh-pages → / (root) → Save
+      - uses: actions/upload-pages-artifact@v2
+        with:
+          path: .                         # uploads your whole root folder
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v2
