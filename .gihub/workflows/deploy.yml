@@ -5,43 +5,31 @@ on:
     branches: [main]
 
 jobs:
-  build-and-deploy:
+  inject-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write                    # needed to push back to main
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Inject secrets into api.js        # ✅ .js not .ts
+      - name: Inject secrets into api.js
         run: |
           sed -i "s|__MOVIE_ID__|${{ secrets.APPSCRIPT_MOVIES_DEPLOYMENTID }}|g" api.js
           sed -i "s|__USERS_ID__|${{ secrets.APPSCRIPT_REGISTEREDUSERS_DEPLOYMENTID }}|g" api.js
           sed -i "s|__COLLECTIONS_ID__|${{ secrets.APPSCRIPT_USERSDATA_DEPLOYMENTID }}|g" api.js
 
-      - name: Verify injection worked             # ✅ add this to debug
-        run: grep -n "MOVIE_ID\|exec" api.js
+      - name: Verify injection            # check this in Actions log
+        run: grep "exec" api.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .                          # ✅ root, no build step needed
+          publish_dir: .
+          exclude_assets: '.github,.gitignore,.env'  # don't expose these
 ```
 
----
-
-**Key changes explained:**
-
-| Issue | Before | After |
-|---|---|---|
-| Wrong file targeted | `api.ts` | `api.js` |
-| Unnecessary build | `npm install` + `npm run build` | Removed entirely |
-| Wrong publish dir | `./dist` (never created) | `.` (your root) |
-| No way to debug | Silent failure | `grep` step prints result so you can confirm in Actions log |
-
----
-
-**Also double-check your GitHub Secrets are saved** — go to your repo → Settings → Secrets and variables → Actions, and confirm these three exist exactly as named:
+Then set GitHub Pages to serve from **`gh-pages` branch**:
 ```
-APPSCRIPT_MOVIES_DEPLOYMENTID
-APPSCRIPT_REGISTEREDUSERS_DEPLOYMENTID
-APPSCRIPT_USERSDATA_DEPLOYMENTID
+Settings → Pages → Branch → gh-pages → / (root) → Save
