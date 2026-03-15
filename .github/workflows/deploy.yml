@@ -7,34 +7,30 @@ on:
 jobs:
   inject-and-deploy:
     runs-on: ubuntu-latest
-    
     permissions:
       contents: read
       pages: write
       id-token: write
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - uses: actions/checkout@v3
 
-      - name: Inject secrets into api.js
+      - name: Inject secrets
         run: |
           sed -i "s|__MOVIE_ID__|${{ secrets.APPSCRIPT_MOVIES_DEPLOYMENTID }}|g" api.js
           sed -i "s|__USERS_ID__|${{ secrets.APPSCRIPT_REGISTEREDUSERS_DEPLOYMENTID }}|g" api.js
           sed -i "s|__COLLECTIONS_ID__|${{ secrets.APPSCRIPT_USERSDATA_DEPLOYMENTID }}|g" api.js
 
-      - name: Verify injection            # ← check this in Actions log
+      - name: Verify injection
         run: grep "exec" api.js
 
-      - uses: actions/configure-pages@v3
-
-      - uses: actions/upload-pages-artifact@v2
+      - uses: actions/configure-pages@v5        # ✅ updated
+      - uses: actions/upload-pages-artifact@v3  # ✅ updated
         with:
-          path: .                         # uploads your whole root folder
+          path: .
 
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4           # ✅ updated
