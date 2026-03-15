@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Inject secrets into api.ts
+        run: |
+          sed -i "s|__MOVIE_ID__|${{ secrets.APPSCRIPT_MOVIES_DEPLOYMENTID }}|g" api.ts
+          sed -i "s|__USERS_ID__|${{ secrets.APPSCRIPT_REGISTEREDUSERS_DEPLOYMENTID }}|g" api.ts
+          sed -i "s|__COLLECTIONS_ID__|${{ secrets.APPSCRIPT_USERSDATA_DEPLOYMENTID }}|g" api.ts
+
+      - name: Install & Build
+        run: |
+          npm install
+          npm run build        # your tsc / bundler step
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist  # wherever your build outputs
