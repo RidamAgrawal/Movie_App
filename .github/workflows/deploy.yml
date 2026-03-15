@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Check secrets exist          # ← added here
+        run: |
+          [ -z "${{ secrets.APPSCRIPT_MOVIES_DEPLOYMENTID }}" ] && echo "MOVIES secret is EMPTY" || echo "MOVIES secret is SET"
+          [ -z "${{ secrets.APPSCRIPT_REGISTEREDUSERS_DEPLOYMENTID }}" ] && echo "USERS secret is EMPTY" || echo "USERS secret is SET"
+          [ -z "${{ secrets.APPSCRIPT_USERSDATA_DEPLOYMENTID }}" ] && echo "COLLECTIONS secret is EMPTY" || echo "COLLECTIONS secret is SET"
+
       - name: Inject secrets
         run: |
           sed -i "s|__MOVIE_ID__|${{ secrets.APPSCRIPT_MOVIES_DEPLOYMENTID }}|g" api.js
@@ -26,11 +32,11 @@ jobs:
       - name: Verify injection
         run: grep "exec" api.js
 
-      - uses: actions/configure-pages@v5        # ✅ updated
-      - uses: actions/upload-pages-artifact@v3  # ✅ updated
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4           # ✅ updated
+        uses: actions/deploy-pages@v4
